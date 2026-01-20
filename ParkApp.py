@@ -41,6 +41,9 @@ class ParkApp(ctk.CTk):
         self.search_button = ctk.CTkButton(self.search_frame, text="Suchen", width=100, command=self.suche_einzelnen_platz)
         self.search_button.pack(side="right", padx=10)
 
+
+
+
         # Verfügbare Parkplätze eines bestimmten Parkplatz ausgeben
         self.label = ctk.CTkLabel(self, text="Verfügbare Parkplätze bei bestimmter ID", font=("Arial", 20))
         self.label.pack()
@@ -54,22 +57,46 @@ class ParkApp(ctk.CTk):
         self.search_button = ctk.CTkButton(self.search_frame, text="Suchen", width=100, command=self.freie_plaetze)
         self.search_button.pack(side="right", padx=10)
 
+
+
+
         # Neuen Parkplatz hinzufügen
-        self.add_label = ctk.CTkLabel(self, text="Parkplatz hinzufügen: ")
-        self.add_label.pack(pady=(20, 0))
+        self.add_label = ctk.CTkLabel(self, text="Parkplatz hinzufügen", font=("Arial", 20))
+        self.add_label.pack(pady=20)
 
         self.name_entry = ctk.CTkEntry(self, placeholder_text="Name des Parkplatzes")
-        self.name_entry.pack(pady=5)
+        self.name_entry.pack()
 
         self.city_entry = ctk.CTkEntry(self, placeholder_text="Ort des Parkplatzes")
-        self.city_entry.pack(pady=5)
+        self.city_entry.pack()
 
         self.totalSpots_entry = ctk.CTkEntry(self, placeholder_text="Maximale Kapazität")
-        self.totalSpots_entry.pack(pady=5)
+        self.totalSpots_entry.pack()
 
         self.add_button = ctk.CTkButton(self, text="Hinzufügen", fg_color="green", command=self.neuen_parkplatz_posten)
-        self.add_button.pack(pady=10)
+        self.add_button.pack()
 
+
+
+
+        # Parkplatz löschen
+        self.add_label = ctk.CTkLabel(self, text="Parkplatz löschen", font=("Arial", 20))
+        self.add_label.pack(pady=20)
+
+        self.search_frame = ctk.CTkFrame(self) # Gruppierung für schöneres Layout
+        self.search_frame.pack()
+
+        self.id_entry3 = ctk.CTkEntry(self.search_frame, placeholder_text="ID eingeben (z.B. 1)")
+        self.id_entry3.pack()
+
+        self.delete_button = ctk.CTkButton(
+        self.search_frame, 
+        text="Löschen", 
+        fg_color="red",      # Rot signalisiert Löschen
+        hover_color="darkred", 
+        command=self.delete_parkplatz
+        )
+        self.delete_button.pack()
 
         # ERGEBNIS ANZEIGE
         self.result_box = ctk.CTkTextbox(self, width=450, height=250)
@@ -83,6 +110,10 @@ class ParkApp(ctk.CTk):
         self.result_box.delete("0.0", "end")
         self.result_box.insert("end", text)
         self.result_box.configure(state="disabled")
+
+
+
+
 
     # Methode um alle Parkplätze abzurufen
     def lade_alle_daten(self):
@@ -103,6 +134,10 @@ class ParkApp(ctk.CTk):
                 self.schreibe_in_box(ausgabe)
         except Exception as e:
             self.schreibe_in_box(f"Fehler: {str(e)}")
+
+
+
+
 
     # Methode um nur den gewünschten Parkplatz abzurufen
     def suche_einzelnen_platz(self):
@@ -130,6 +165,11 @@ class ParkApp(ctk.CTk):
         except Exception as e:
             self.schreibe_in_box(f"Verbindungsfehler: {str(e)}")
 
+
+
+
+
+
     # Methode um freie Plätze bei bestimmter ID zu ermitteln
     def freie_plaetze(self):
         p_id = self.id_entry2.get().strip()
@@ -156,6 +196,9 @@ class ParkApp(ctk.CTk):
             self.schreibe_in_box(f"Verbindungsfehler: {str(e)}")
 
         
+
+
+
 
     # Methode um neuen Parkplatz hinzuzufügen
     def neuen_parkplatz_posten(self):
@@ -193,6 +236,43 @@ class ParkApp(ctk.CTk):
             self.schreibe_in_box("Fehler: Anzahl muss eine Zahl sein!")
         except Exception as e:
             self.schreibe_in_box(f"Verbindungsfehler: {e}")
+    
+
+
+
+
+
+    # Methode um einen Parkplatz zu löschen
+    def delete_parkplatz(self):
+
+        p_id = self.id_entry3.get().strip()
+    
+        if not p_id:
+            self.schreibe_in_box("Fehler: Bitte eine ID zum Löschen eingeben!")
+            return
+
+        # Sicherheitsabfrage (optional)
+        self.schreibe_in_box(f"Versuche ID {p_id} zu löschen...")
+    
+        try:
+            # requests.delete statt requests.get
+            url = f"{self.admin_url}/{p_id}"
+            response = requests.delete(url, timeout=5)
+
+            if response.status_code == 200 or response.status_code == 204:
+                self.schreibe_in_box(f"Erfolg: Parkhaus mit ID {p_id} wurde gelöscht.")
+                self.id_entry.delete(0, 'end') # Eingabefeld leeren
+            elif response.status_code == 404:
+                self.schreibe_in_box(f"Fehler: ID {p_id} existiert nicht.")
+            elif response.status_code == 401:
+                self.schreibe_in_box("Fehler: Keine Berechtigung (Admin erforderlich).")
+            else:
+                self.schreibe_in_box(f"Server-Fehler: {response.status_code}")
+
+        except Exception as e:
+            self.schreibe_in_box(f"Verbindungsfehler: {str(e)}")
+
+
 
 if __name__ == "__main__":
     app = ParkApp()
