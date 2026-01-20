@@ -1,0 +1,9 @@
+{
+    "urls": {
+        "base_api": "http://localhost:5251/api/Parking",
+        "admin_api": "http://localhost:5251/api/admin/parkinglotcrud"
+    },
+    "settings": {
+        "timeout": 10
+    }
+}
