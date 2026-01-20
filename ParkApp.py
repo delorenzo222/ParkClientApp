@@ -1,17 +1,22 @@
 import customtkinter as ctk
 import requests
+import json
 
 class ParkApp(ctk.CTk):
-    def __init__(self):
+    def __init__(self, config_path="config.json"):
         super().__init__()
+
+        # Laden der JSON Datei mit den Verlinkungen
+        with open(config_path, 'r') as file:
+            config = json.load(file)
+
+            # API Basis-URL und Admin-URL
+            self.base_api_url = config['urls']['base_api']
+            self.admin_url = config['urls']['admin_api']
 
         # Client Fenster
         self.title("ParkAPI Desktop Client")
         self.geometry("1000x1200")
-
-        # API Basis-URL und Admin-URL
-        self.base_api_url = "http://localhost:5251/api/Parking"
-        self.admin_url = "http://localhost:5251/api/admin/parkinglotcrud"
 
         # Titel
         self.label = ctk.CTkLabel(self, text="Parkplatz Management", font=("Arial", 22, "bold"))
@@ -24,6 +29,9 @@ class ParkApp(ctk.CTk):
 
 
         # Einzelnen Parkplatz mit ID suchen
+        self.label = ctk.CTkLabel(self, text="Information über bestimmten Parkplatz", font=("Arial", 20))
+        self.label.pack()
+
         self.search_frame = ctk.CTkFrame(self) # Gruppierung für schöneres Layout
         self.search_frame.pack(pady=10, padx=20, fill="x")
 
@@ -33,6 +41,18 @@ class ParkApp(ctk.CTk):
         self.search_button = ctk.CTkButton(self.search_frame, text="Suchen", width=100, command=self.suche_einzelnen_platz)
         self.search_button.pack(side="right", padx=10)
 
+        # Verfügbare Parkplätze eines bestimmten Parkplatz ausgeben
+        self.label = ctk.CTkLabel(self, text="Verfügbare Parkplätze bei bestimmter ID", font=("Arial", 20))
+        self.label.pack()
+
+        self.search_frame = ctk.CTkFrame(self) # Gruppierung für schöneres Layout
+        self.search_frame.pack(pady=10, padx=20, fill="x")
+
+        self.id_entry2 = ctk.CTkEntry(self.search_frame, placeholder_text="ID eingeben (z.B. 1)")
+        self.id_entry2.pack(side="left", padx=10, pady=10, expand=True, fill="x")
+
+        self.search_button = ctk.CTkButton(self.search_frame, text="Suchen", width=100, command=self.freie_plaetze)
+        self.search_button.pack(side="right", padx=10)
 
         # Neuen Parkplatz hinzufügen
         self.add_label = ctk.CTkLabel(self, text="Parkplatz hinzufügen: ")
@@ -109,6 +129,33 @@ class ParkApp(ctk.CTk):
                 self.schreibe_in_box(f"Server-Fehler: {response.status_code}")
         except Exception as e:
             self.schreibe_in_box(f"Verbindungsfehler: {str(e)}")
+
+    # Methode um freie Plätze bei bestimmter ID zu ermitteln
+    def freie_plaetze(self):
+        p_id = self.id_entry2.get().strip()
+        if not p_id:
+            self.schreibe_in_box("Fehler: Bitte eine ID eingeben!")
+            return
+        
+        self.schreibe_in_box(f"Suche ID {p_id}...")
+        try:
+            response = requests.get(f"{self.base_api_url}/{p_id}/free", timeout=5)
+
+            # Erfolg
+            if response.status_code == 200:
+                platz = response.json()
+                info = f"Freie Plätze bei {p_id}: {platz}"
+                self.schreibe_in_box(info)
+                
+            # Fehler
+            elif response.status_code == 404:
+                self.schreibe_in_box(f"ID {p_id} wurde nicht gefunden.")
+            else:
+                self.schreibe_in_box(f"Server-Fehler: {response.status_code}")
+        except Exception as e:
+            self.schreibe_in_box(f"Verbindungsfehler: {str(e)}")
+
+        
 
     # Methode um neuen Parkplatz hinzuzufügen
     def neuen_parkplatz_posten(self):
