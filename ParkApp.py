@@ -256,7 +256,7 @@ class ParkApp(ctk.CTk):
     
         try:
             # requests.delete statt requests.get
-            url = f"{self.admin_url}/{p_id}"
+            url = f"{self.admin_url}/RemoveParkingLot/{p_id}"
             response = requests.delete(url, timeout=5)
 
             if response.status_code == 200 or response.status_code == 204:
